@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>PokeCards</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+    <h2>Selecione os Pokemons</h2>
+    <h3>Selecione 1 ou com 'Ctrl + click' para mais de um Pokemon</h3>
+
+    <!-- Campo busca -->
+    <input type="text" id="searchInput" placeholder="Buscar Pokemon..." />
+
+    <!-- Dropdown multipla selecao -->
+    <select id="pokemonSelect" multiple size="15"></select>
+
+    <button id="btnMostrar" class="btn-pokemon">Mostrar Selecionado(s)</button>
+
+    <div class="pokemons"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
