@@ -51,7 +51,12 @@ select.addEventListener('change', () => {
 
 // filtrar conforme digita
 searchInput.addEventListener('input', () => {
-    const termo = searchInput.value.toLowerCase();
+    // sanitizacao permite apenas letras (a-z) e hyphens (-)
+    const sanitizedValue = searchInput.value.toLowerCase().replace(/[^a-z\-]/g, '');
+    // atualiza o campo de entrada para que o usuário veja caracteres inválidos desaparecerem
+    searchInput.value = sanitizedValue;
+
+    const termo = sanitizedValue;
     const filtrados = listaPokemons.filter(p => p.name.toLowerCase().includes(termo));
     atualizarDropdown(filtrados);
 });

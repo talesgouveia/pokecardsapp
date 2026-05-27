@@ -35,21 +35,21 @@ jobs:
         run: |
           echo "=== CodeQL SAST Scan Summary ==="
           echo "## CodeQL SAST Scan Summary" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ -f "codeql-results/javascript.sarif" ]; then
             # Count the number of results in the SARIF file using jq
             count=$(jq '.runs[0].results | length' codeql-results/javascript.sarif)
-            
+
             if [ "$count" -gt 0 ]; then
               echo "Found $count potential issue(s). Details:"
               echo "Found $count potential issue(s)." >> $GITHUB_STEP_SUMMARY
-              
+
               # Extract details: Rule ID, Message, and File Location using jq
               details=$(jq -r '.runs[0].results[] | "- **\(.ruleId)**: \(.message.text) (File: `\(.locations[0].physicalLocation.artifactLocation.uri):\(.locations[0].physicalLocation.region.startLine)`)"' codeql-results/javascript.sarif)
-              
+
               # Print to terminal
               echo "$details"
-              
+
               # Print to Step Summary
               echo "" >> $GITHUB_STEP_SUMMARY
               echo "$details" >> $GITHUB_STEP_SUMMARY
