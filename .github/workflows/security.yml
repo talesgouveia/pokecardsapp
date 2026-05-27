@@ -21,12 +21,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: javascript
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:javascript"
           output: "codeql-results"
@@ -35,17 +35,24 @@ jobs:
         run: |
           echo "=== CodeQL SAST Scan Summary ==="
           echo "## CodeQL SAST Scan Summary" >> $GITHUB_STEP_SUMMARY
-
+          
           if [ -f "codeql-results/javascript.sarif" ]; then
-            count=$(grep -c '"ruleId":' codeql-results/javascript.sarif || true)
+            # Count the number of results in the SARIF file using jq
+            count=$(jq '.runs[0].results | length' codeql-results/javascript.sarif)
+            
             if [ "$count" -gt 0 ]; then
-              echo "Found $count potential issue(s). Summary of rule violations:"
-              grep -o '"ruleId": "[^"]*"' codeql-results/javascript.sarif | sort | uniq -c
-
+              echo "Found $count potential issue(s). Details:"
               echo "Found $count potential issue(s)." >> $GITHUB_STEP_SUMMARY
-              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-              grep -o '"ruleId": "[^"]*"' codeql-results/javascript.sarif | sort | uniq -c >> $GITHUB_STEP_SUMMARY
-              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              
+              # Extract details: Rule ID, Message, and File Location using jq
+              details=$(jq -r '.runs[0].results[] | "- **\(.ruleId)**: \(.message.text) (File: `\(.locations[0].physicalLocation.artifactLocation.uri):\(.locations[0].physicalLocation.region.startLine)`)"' codeql-results/javascript.sarif)
+              
+              # Print to terminal
+              echo "$details"
+              
+              # Print to Step Summary
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "$details" >> $GITHUB_STEP_SUMMARY
             else
               echo "No vulnerabilities found! 🎉"
               echo "No vulnerabilities found! 🎉" >> $GITHUB_STEP_SUMMARY
@@ -55,6 +62,7 @@ jobs:
             echo "SARIF results file not found." >> $GITHUB_STEP_SUMMARY
           fi
           echo "================================"
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "Detailed results are available in the Security tab of this repository." >> $GITHUB_STEP_SUMMARY
 
   sca_trivy:
