@@ -1,0 +1,94 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  # schedule:
+  #   - cron: '0 6 * * 1' # Runs every Monday at 6:00 AM UTC
+
+jobs:
+  sast_codeql:
+    name: SAST Scan (CodeQL)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript"
+          output: "codeql-results"
+
+      - name: Show SAST Summary in Terminal
+        run: |
+          echo "=== CodeQL SAST Scan Summary ==="
+          echo "## CodeQL SAST Scan Summary" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "codeql-results/javascript.sarif" ]; then
+            count=$(grep -c '"ruleId":' codeql-results/javascript.sarif || true)
+            if [ "$count" -gt 0 ]; then
+              echo "Found $count potential issue(s). Summary of rule violations:"
+              grep -o '"ruleId": "[^"]*"' codeql-results/javascript.sarif | sort | uniq -c
+
+              echo "Found $count potential issue(s)." >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              grep -o '"ruleId": "[^"]*"' codeql-results/javascript.sarif | sort | uniq -c >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "No vulnerabilities found! 🎉"
+              echo "No vulnerabilities found! 🎉" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "SARIF results file not found."
+            echo "SARIF results file not found." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "================================"
+          echo "Detailed results are available in the Security tab of this repository." >> $GITHUB_STEP_SUMMARY
+
+  sca_trivy:
+    name: SCA Scan (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner (FS mode)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          output: 'trivy-results.txt'
+          # Exits with 0 so it doesn't break the build immediately, change to 1 to block PRs on high/critical vulns
+          exit-code: '0'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      - name: Show SCA Summary in Terminal
+        run: |
+          echo "=== Trivy SCA Scan Summary ==="
+          echo "## Trivy SCA Scan Summary" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f trivy-results.txt ]; then
+            cat trivy-results.txt
+
+            echo "\`\`\`text" >> $GITHUB_STEP_SUMMARY
+            cat trivy-results.txt >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No vulnerabilities found or results file missing! 🎉"
+            echo "No vulnerabilities found or results file missing! 🎉" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "=============================="

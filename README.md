@@ -33,4 +33,15 @@ PokeCards is a simple, interactive web application that allows users to search, 
 2. Click on a Pokémon name in the dropdown list to select it. Hold `Ctrl` (or `Cmd` on Mac) while clicking to select multiple Pokémon.
 3. Click the **"Mostrar Selecionado(s)"** (Show Selected) button to render the cards of the Pokémon you have chosen.
 
+## Continuous Integration (Security Scans)
+
+This repository includes a GitHub Actions workflow (`.github/workflows/security.yml`) configured to run automated security scans. The workflow uses two free, industry-standard tools:
+
+- **SAST (Static Application Security Testing):** Powered by **GitHub CodeQL**, this job analyzes the JavaScript source code for common vulnerabilities, bad security practices, and potential risks.
+- **SCA (Software Composition Analysis):** Powered by **Aqua Security's Trivy**, this job scans the repository filesystem to identify known vulnerabilities in dependencies, misconfigurations, and exposed secrets.
+
+### Workflow Triggers & Summaries
+- **Triggers:** The pipeline automatically runs on pushes to the `main`/`master` branches, on Pull Requests, and on a weekly schedule (Sundays at midnight).
+- **Summaries:** At the end of each scan, custom steps extract the findings and print a user-friendly summary directly to the GitHub Actions terminal logs and the visual **GitHub Step Summary** page. This makes it easy to review potential security issues without leaving the GitHub Actions UI.
+
 ---
